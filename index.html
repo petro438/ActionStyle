@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Action Editorial Library</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Oswald:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky left index (search + sections) beside one reading column; each component = label row, live article stage, code block. */
+:root{
+  --bg:#f4f6f2; --surface:#ffffff; --ink:#0a1628; --muted:#4f5b6b; --line:#dbe0d8;
+  --accent:#00c358; --accent-ink:#00793a; --accent-soft:#e3f6ea;
+  --warn:#b4410c; --warn-soft:#fbeee6;
+  --code-bg:#0e1a2c; --code-fg:#d4e0ee;
+  --stage:#ffffff; --stage-around:#e9ece6;
+  --f-display:'Oswald', 'Arial Narrow', Arial, sans-serif;
+  --f-body:'DM Sans', Arial, sans-serif;
+  --f-mono:'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#08121f; --surface:#0f1c2f; --ink:#eaf0f5; --muted:#9fb0c3; --line:#22334c;
+  --accent:#00c358; --accent-ink:#3fe08e; --accent-soft:#0f2e22;
+  --warn:#ff9a62; --warn-soft:#33200f;
+  --code-bg:#050c17; --code-fg:#d4e0ee;
+  --stage:#ffffff; --stage-around:#0b1727; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#08121f; --surface:#0f1c2f; --ink:#eaf0f5; --muted:#9fb0c3; --line:#22334c;
+  --accent:#00c358; --accent-ink:#3fe08e; --accent-soft:#0f2e22;
+  --warn:#ff9a62; --warn-soft:#33200f;
+  --code-bg:#050c17; --code-fg:#d4e0ee;
+  --stage:#ffffff; --stage-around:#0b1727; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55}
+a{color:var(--accent-ink)}
+.shell{display:grid;grid-template-columns:280px minmax(0,1fr);max-width:1360px;margin:0 auto;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+
+/* index */
+.index{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;height:100vh;overflow:auto;padding-block:32px;padding-right:28px;display:flex;flex-direction:column;gap:24px}
+.brand{display:flex;flex-direction:column;gap:4px}
+.brand .mark{font-family:var(--f-display);font-weight:600;font-size:28px;line-height:1;text-transform:uppercase;letter-spacing:.01em}
+.brand .mark span{color:var(--accent-ink)}
+.brand small{color:var(--muted);font-size:13px}
+.search{width:100%;font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.search:focus{outline:2px solid var(--accent);outline-offset:1px}
+nav{display:flex;flex-direction:column;gap:18px}
+.navgroup{display:flex;flex-direction:column;gap:2px}
+.navgroup h4{margin:0 0 4px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.navgroup a{color:var(--ink);text-decoration:none;font-size:14px;padding:5px 10px;border-radius:6px;display:flex;justify-content:space-between;gap:8px}
+.navgroup a:hover{background:var(--surface)}
+.navgroup a.active{background:var(--accent-soft);color:var(--accent-ink);font-weight:700}
+.navgroup a .n{color:var(--muted);font-variant-numeric:tabular-nums;font-weight:400}
+
+/* main */
+main{min-width:0;padding-block:40px 120px;padding-left:40px;border-left:1px solid var(--line);display:flex;flex-direction:column;gap:72px}
+section.block{display:flex;flex-direction:column;gap:24px;scroll-margin-top:24px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-ink)}
+h1,h2{font-family:var(--f-display);font-weight:600;text-transform:uppercase;line-height:1.05;margin:0;text-wrap:balance}
+h1{font-size:clamp(40px,6vw,64px)}
+h2{font-size:clamp(30px,4vw,40px)}
+h3{font-size:20px;margin:0;line-height:1.25}
+.lede{font-size:18px;color:var(--muted);max-width:66ch;margin:0}
+.prose{max-width:70ch;display:flex;flex-direction:column;gap:12px}
+.prose p{margin:0}
+.draft{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);background:var(--warn-soft);padding:4px 10px;border-radius:999px;align-self:flex-start}
+.ph{background:var(--warn-soft);color:var(--warn);padding:0 4px;border-radius:3px;font-weight:500}
+
+.howto{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.howto div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:6px}
+.howto b{font-size:15px}
+.howto p{margin:0;color:var(--muted);font-size:14px}
+
+/* style guide */
+.rules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.rule{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.rule ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:15px}
+.dodont{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:15px;align-items:baseline}
+.dodont .y{color:var(--accent-ink);font-weight:700;font-size:12px;letter-spacing:.06em}
+.dodont .x{color:var(--warn);font-weight:700;font-size:12px;letter-spacing:.06em}
+code.i{font-family:var(--f-mono);font-size:13.5px;background:var(--stage-around);padding:1px 5px;border-radius:4px}
+.check{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 24px}
+.check li{display:flex;gap:10px;align-items:flex-start;font-size:15px}
+.check li::before{content:"";flex:none;width:18px;height:18px;margin-top:2px;border:2px solid var(--accent);border-radius:4px}
+
+/* playbook table */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table.play{border-collapse:collapse;width:100%;min-width:860px;font-size:14.5px}
+table.play th{text-align:left;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:12px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.play td{padding:14px;border-top:1px solid var(--line);vertical-align:top}
+table.play tr:first-child td{border-top:none}
+table.play td:first-child{font-weight:700;white-space:nowrap}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink);white-space:nowrap}
+.pill.no{background:var(--warn-soft);color:var(--warn)}
+.principles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.principles div{border-top:3px solid var(--accent);padding-top:12px;display:flex;flex-direction:column;gap:4px}
+.principles b{font-size:15px}
+.principles p{margin:0;font-size:14px;color:var(--muted)}
+
+/* components */
+.cathead{display:flex;flex-direction:column;gap:8px}
+.comps{display:flex;flex-direction:column;gap:40px}
+.comp{display:flex;flex-direction:column;gap:12px;scroll-margin-top:24px}
+.comp-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px}
+.comp-head .t{display:flex;flex-direction:column;gap:4px;min-width:0}
+.comp-head p{margin:0;color:var(--muted);font-size:15px;max-width:70ch}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.tag.cms{border-color:var(--warn);color:var(--warn)}
+.frame{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 10px 8px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.bar .lbl{font-size:12px;color:var(--muted);font-weight:500}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{font:inherit;font-size:13px;padding:5px 12px;border:0;background:transparent;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:700}
+.seg button:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stage{background:var(--stage-around);padding:24px 16px;display:flex;justify-content:center}
+.col{background:var(--stage);width:100%;max-width:720px;border-radius:6px;padding:8px 24px;transition:max-width .25s ease;box-shadow:0 1px 0 rgba(10,22,40,.06)}
+.col.mobile{max-width:375px;padding:8px 16px}
+.codehead{display:flex;justify-content:space-between;align-items:center;padding:8px 10px 8px 14px;background:var(--code-bg);color:var(--code-fg);border-top:1px solid var(--line)}
+.codehead span{font-family:var(--f-mono);font-size:12px;opacity:.75}
+.btn{font:inherit;font-size:13px;font-weight:700;padding:6px 14px;border-radius:7px;border:0;background:var(--accent);color:#06120b;cursor:pointer}
+.btn.ok{background:var(--code-fg);color:var(--code-bg)}
+pre{margin:0;background:var(--code-bg);color:var(--code-fg);font-family:var(--f-mono);font-size:13px;line-height:1.6;padding:16px;overflow:auto;max-height:340px;tab-size:2}
+.cmsnote{display:flex;gap:10px;align-items:flex-start;background:var(--warn-soft);color:var(--ink);padding:12px 14px;font-size:14px;border-top:1px solid var(--line)}
+.cmsnote b{color:var(--warn)}
+.notes{margin:0;padding-left:18px;font-size:14px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.empty{color:var(--muted);font-size:15px}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:20px}
+
+@media (max-width: 960px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .index{position:static;height:auto;padding-right:0;padding-block:24px 0;gap:16px}
+  nav{flex-direction:row;overflow-x:auto;gap:16px;padding-bottom:8px}
+  .navgroup{min-width:max-content}
+  main{padding-left:0;border-left:0;padding-block:24px 80px;gap:56px}
+  .howto,.rules,.check{grid-template-columns:minmax(0,1fr)}
+  .principles{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width: 520px){ .principles{grid-template-columns:minmax(0,1fr)} .col{padding:8px 14px} }
+@media (prefers-reduced-motion: reduce){ .col{transition:none} }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <aside class="index">
+    <div class="brand">
+      <div class="mark">Action <span>Editorial</span> Library</div>
+      <small>Components, style and CTA rules for every story</small>
+    </div>
+    <label for="q" class="eyebrow" style="margin-bottom:-16px">Find a component</label>
+    <input id="q" class="search" type="search" placeholder="Try “odds table” or “pick”" autocomplete="off">
+    <nav id="nav"></nav>
+  </aside>
+
+  <main id="main">
+    <section class="block" id="start">
+      <div class="eyebrow">Action Network · Editorial</div>
+      <h1>One library for every article</h1>
+      <p class="lede">Everything you need to build a story the same way as everyone else: approved tables and visual elements with code you can copy, how to embed our tools, where CTAs go, and the short list of style rules we all follow.</p>
+      <div class="howto">
+        <div><b>Find it</b><p>Search, or browse the sections on the left. Each component shows a live article preview.</p></div>
+        <div><b>Check it on a phone</b><p>Switch any preview to Mobile. If it doesn’t work at 375px, it doesn’t ship.</p></div>
+        <div><b>Copy it</b><p>Paste the code into an HTML block. Swap out every <span class="ph">[bracket]</span> and the sample numbers.</p></div>
+      </div>
+      <p class="prose" style="color:var(--muted);font-size:15px">Need something that isn’t here? Don’t build it by hand. Ask in <span class="ph">[#editorial-components]</span> so it gets built once, with tracking, for everyone.</p>
+    </section>
+
+    <section class="block" id="style-guide">
+      <div class="eyebrow">Style guide</div>
+      <h2>The rules that keep us consistent</h2>
+      <span class="draft">Draft · confirm items in brackets</span>
+      <div class="rules">
+        <div class="rule">
+          <h3>Odds &amp; lines</h3>
+          <div class="dodont">
+            <span class="y">DO</span><span>American odds with a sign: <code class="i">+150</code>, <code class="i">-110</code></span>
+            <span class="y">DO</span><span>Spread with the price: <code class="i">Bills +3.5 (-110)</code></span>
+            <span class="y">DO</span><span>Totals as <code class="i">Over 47.5</code> / <code class="i">Under 47.5</code> in prose, <code class="i">O 47.5</code> in tables</span>
+            <span class="x">DON’T</span><span>Mix formats in one article, or drop the sign: <code class="i">150</code></span>
+            <span class="x">DON’T</span><span>Quote a line without the book and the time it was pulled</span>
+          </div>
+        </div>
+        <div class="rule">
+          <h3>Names &amp; brands</h3>
+          <ul>
+            <li>Sportsbooks as they style themselves: DraftKings, FanDuel, BetMGM, Caesars Sportsbook, bet365</li>
+            <li>Teams by nickname after first reference <span class="ph">[confirm: city on first reference?]</span></li>
+            <li>Our product is Action Network PRO, then PRO</li>
+            <li>Experts by full name on first reference, last name after</li>
+          </ul>
+        </div>
+        <div class="rule">
+          <h3>Picks</h3>
+          <ul>
+            <li>Every pick uses the Pick box, never bold text alone</li>
+            <li>Include units and a “bet to” number when the expert gives one</li>
+            <li>Show the reasoning before the pick box, not only after it</li>
+            <li>The CTA under a pick goes to the book whose price you quoted</li>
+          </ul>
+        </div>
+        <div class="rule">
+          <h3>Times, numbers &amp; compliance</h3>
+          <ul>
+            <li>Eastern time, written <code class="i">8:20 p.m. ET</code></li>
+            <li>Percentages as numerals: <code class="i">62%</code></li>
+            <li>Records as <code class="i">12-4 ATS</code>, <code class="i">8-2 to the Over</code></li>
+            <li>Responsible gaming line on every story with a sportsbook CTA <span class="ph">[exact text from compliance]</span></li>
+          </ul>
+        </div>
+        <div class="rule">
+          <h3>Images</h3>
+          <ul>
+            <li>Every story gets a featured image, from <span class="ph">[Getty / Imagn / AP]</span> or our templates in <span class="ph">[Canva / Figma]</span></li>
+            <li>Featured images at least 1200px wide, 16:9, so they qualify for large previews in Google Discover</li>
+            <li>Alt text says what’s in the photo, not the headline</li>
+            <li>Credit every photo in the caption</li>
+          </ul>
+        </div>
+        <div class="rule">
+          <h3>Internal links</h3>
+          <ul>
+            <li><span class="ph">[3–5]</span> internal links per article, the first in the first <span class="ph">[3]</span> paragraphs</li>
+            <li>Link to at least one money page (promo or review) when the story mentions a book</li>
+            <li>Descriptive anchors: “Chiefs vs. Bills odds,” never “click here”</li>
+            <li>Priority pages to link this week: <span class="ph">[link to list]</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="rule">
+        <h3>Before you hit publish</h3>
+        <ul class="check">
+          <li>Featured image set, credited, with alt text</li>
+          <li>Every table checked in Mobile view</li>
+          <li>All CTAs inserted from the CMS block, none hand-built</li>
+          <li>No new Infogram embeds</li>
+          <li>Internal links in, including a money page</li>
+          <li>After publish: open the live page on your phone and check that images and tables rendered</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="block" id="cta-playbook">
+      <div class="eyebrow">CTA playbook</div>
+      <h2>Where each CTA goes, by story type</h2>
+      <span class="draft">Starting point · confirm with revenue</span>
+      <div class="principles">
+        <div><b>Follow the bet</b><p>A CTA goes right after the reader learns what to bet, never before.</p></div>
+        <div><b>One primary CTA</b><p>Each story has one main CTA. Anything else is a secondary text link.</p></div>
+        <div><b>Match the price</b><p>Send readers to the book whose line you quoted.</p></div>
+        <div><b>Blocks only</b><p>Every CTA is a CMS block, so every click is tracked.</p></div>
+      </div>
+      <div class="tablewrap">
+        <table class="play">
+          <thead><tr><th>Story type</th><th>Primary CTA</th><th>Placement</th><th>Secondary</th><th>Avoid</th></tr></thead>
+          <tbody id="playbook"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div id="library" style="display:flex;flex-direction:column;gap:72px"></div>
+    <p class="empty" id="nomatch" hidden>No components match that search. Try a broader word like “table” or “CTA”.</p>
+
+    <footer>Maintained by <span class="ph">[owner]</span>. Last updated <span class="ph">[date]</span>. Sample numbers in previews are examples, not real lines.</footer>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   EDIT HERE. Categories, components and CTA playbook rows.
+   kind:"html" = paste-ready code. kind:"cms" = use a CMS block;
+   the "code" field holds the insert instructions instead.
+   "preview" (optional) overrides what the stage shows.
+   ============================================================ */
+const CATEGORIES = [
+  {id:"tables",  name:"Tables",          blurb:"Five columns at most. Every table scrolls inside its own box on a phone, never the whole page. Numbers right-aligned."},
+  {id:"visuals", name:"Visual elements", blurb:"The building blocks inside a story: picks, key stats, matchup snapshots and takeaways."},
+  {id:"embeds",  name:"Tool embeds",     blurb:"How to put an Action Network tool inside an article. Use these instead of Infogram."},
+  {id:"ctas",    name:"CTAs",            blurb:"Previews of the approved CTAs. Insert them as CMS blocks so every click is tracked. Never paste CTA HTML."},
+  {id:"images",  name:"Images",          blurb:"Featured and in-body images, captions and credits."}
+];
+
+const T = "border-top:1px solid #e1e5ea";
+const COMPONENTS = [
+/* ---------- TABLES ---------- */
+{id:"odds-table", cat:"tables", name:"Odds table", kind:"html", sample:true,
+ use:"Spread, total and moneyline for one game. Use it near the top of a preview, before the pick.",
+ notes:["Keep the time stamp line. Lines move, and readers need to know when you pulled these.","Never add a column per sportsbook. Use the odds page link for line shopping."],
+ code:`<div style="overflow-x:auto;margin:24px 0 8px;border:1px solid #e1e5ea;border-radius:8px">
+  <table style="width:100%;min-width:320px;border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums">
+    <thead>
+      <tr style="background:#0a1628;color:#ffffff">
+        <th style="text-align:left;padding:10px 12px">Team</th>
+        <th style="text-align:right;padding:10px 12px">Spread</th>
+        <th style="text-align:right;padding:10px 12px">Total</th>
+        <th style="text-align:right;padding:10px 12px">Moneyline</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="padding:10px 12px;font-weight:700">Bills</td>
+        <td style="text-align:right;padding:10px 12px">+3.5 (-110)</td>
+        <td style="text-align:right;padding:10px 12px">O 47.5 (-110)</td>
+        <td style="text-align:right;padding:10px 12px">+150</td>
+      </tr>
+      <tr style="${T};background:#f7f8fa">
+        <td style="padding:10px 12px;font-weight:700">Chiefs</td>
+        <td style="text-align:right;padding:10px 12px">-3.5 (-110)</td>
+        <td style="text-align:right;padding:10px 12px">U 47.5 (-110)</td>
+        <td style="text-align:right;padding:10px 12px">-178</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<p style="font-size:13px;color:#5b6573;margin:0 0 24px">Odds via [Sportsbook] as of [time] ET.</p>`},
+
+{id:"stat-table", cat:"tables", name:"Stats table", kind:"html", sample:true,
+ use:"Records, trends and splits. Up to five columns and about ten rows; split anything bigger into two tables.",
+ notes:["Highlight at most one row (the team you’re writing about) with the light green row background.","Put the source and date range in the note under the table."],
+ code:`<div style="overflow-x:auto;margin:24px 0 8px;border:1px solid #e1e5ea;border-radius:8px">
+  <table style="width:100%;min-width:320px;border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums">
+    <thead>
+      <tr style="background:#0a1628;color:#ffffff">
+        <th style="text-align:left;padding:10px 12px">Team</th>
+        <th style="text-align:right;padding:10px 12px">ATS</th>
+        <th style="text-align:right;padding:10px 12px">Cover %</th>
+        <th style="text-align:right;padding:10px 12px">Avg. margin</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="background:#e8f8ef">
+        <td style="padding:10px 12px;font-weight:700">Bills</td>
+        <td style="text-align:right;padding:10px 12px">12-5</td>
+        <td style="text-align:right;padding:10px 12px">70.6%</td>
+        <td style="text-align:right;padding:10px 12px">+4.1</td>
+      </tr>
+      <tr style="${T}">
+        <td style="padding:10px 12px;font-weight:700">Chiefs</td>
+        <td style="text-align:right;padding:10px 12px">8-9</td>
+        <td style="text-align:right;padding:10px 12px">47.1%</td>
+        <td style="text-align:right;padding:10px 12px">-0.6</td>
+      </tr>
+      <tr style="${T}">
+        <td style="padding:10px 12px;font-weight:700">Ravens</td>
+        <td style="text-align:right;padding:10px 12px">10-7</td>
+        <td style="text-align:right;padding:10px 12px">58.8%</td>
+        <td style="text-align:right;padding:10px 12px">+2.3</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<p style="font-size:13px;color:#5b6573;margin:0 0 24px">Source: [Action Network / BetLabs], [date range].</p>`},
+
+{id:"game-info", cat:"tables", name:"Game info table", kind:"html", sample:true,
+ use:"Two-column facts block for kickoff time, TV and venue. Goes right under the odds table.",
+ notes:["Two columns only, so it never needs to scroll."],
+ code:`<table style="width:100%;border-collapse:collapse;margin:24px 0;font-size:15px;border:1px solid #e1e5ea">
+  <tbody>
+    <tr><th style="text-align:left;padding:10px 12px;width:38%;background:#f7f8fa;color:#4a5568;font-weight:700">Matchup</th><td style="padding:10px 12px">Bills at Chiefs</td></tr>
+    <tr style="${T}"><th style="text-align:left;padding:10px 12px;background:#f7f8fa;color:#4a5568;font-weight:700">Time</th><td style="padding:10px 12px">Sun., Nov. 8 · 4:25 p.m. ET</td></tr>
+    <tr style="${T}"><th style="text-align:left;padding:10px 12px;background:#f7f8fa;color:#4a5568;font-weight:700">TV</th><td style="padding:10px 12px">CBS</td></tr>
+    <tr style="${T}"><th style="text-align:left;padding:10px 12px;background:#f7f8fa;color:#4a5568;font-weight:700">Venue</th><td style="padding:10px 12px">GEHA Field at Arrowhead Stadium</td></tr>
+  </tbody>
+</table>`},
+
+/* ---------- VISUALS ---------- */
+{id:"pick-box", cat:"visuals", name:"Pick box", kind:"html", sample:true,
+ use:"Every pick in every story. Put the reasoning first, then the pick box, then the CTA for the book whose price you quoted.",
+ notes:["One pick per box. For a card of several picks, stack boxes.","Drop the “bet to” line if the expert didn’t give one."],
+ code:`<div style="border:2px solid #00c358;border-radius:10px;padding:16px 18px;margin:24px 0;background:#f2fbf6">
+  <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#00793a">The pick</div>
+  <div style="font-size:22px;font-weight:700;color:#0a1628;margin-top:4px">Bills +3.5 (-110)</div>
+  <div style="font-size:14px;color:#4a5568;margin-top:6px">1 unit · Bet to +3 (-115) · [Expert name]</div>
+</div>`},
+
+{id:"key-stat", cat:"visuals", name:"Key stat", kind:"html", sample:true,
+ use:"One number that carries the argument. Once per story, at most.",
+ notes:["The line under the number must say exactly what was counted and over what span."],
+ code:`<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:24px 0;padding:18px 20px;background:#0a1628;border-radius:10px;color:#ffffff">
+  <div style="font-size:44px;font-weight:700;line-height:1;color:#00c358;font-variant-numeric:tabular-nums">71%</div>
+  <div style="flex:1;min-width:200px;font-size:16px;line-height:1.45">Bills cover rate as road underdogs since 2021 (12-5 ATS). Source: [BetLabs].</div>
+</div>`},
+
+{id:"matchup", cat:"visuals", name:"Matchup snapshot", kind:"html", sample:true,
+ use:"Compact header for a game: who, when, and the three main lines. Use it at the top of a game preview instead of a full odds table.",
+ notes:["The three tiles wrap to their own lines on a phone."],
+ code:`<div style="border:1px solid #e1e5ea;border-radius:10px;margin:24px 0;overflow:hidden">
+  <div style="padding:12px 16px;background:#0a1628;color:#ffffff;font-weight:700">Bills at Chiefs <span style="font-weight:400;color:#b8c4d6">· Sun. 4:25 p.m. ET · CBS</span></div>
+  <div style="display:flex;flex-wrap:wrap">
+    <div style="flex:1;min-width:110px;padding:12px 16px"><div style="font-size:12px;color:#5b6573;text-transform:uppercase;letter-spacing:.06em">Spread</div><div style="font-size:18px;font-weight:700;font-variant-numeric:tabular-nums">KC -3.5</div></div>
+    <div style="flex:1;min-width:110px;padding:12px 16px;border-left:1px solid #e1e5ea"><div style="font-size:12px;color:#5b6573;text-transform:uppercase;letter-spacing:.06em">Total</div><div style="font-size:18px;font-weight:700;font-variant-numeric:tabular-nums">47.5</div></div>
+    <div style="flex:1;min-width:110px;padding:12px 16px;border-left:1px solid #e1e5ea"><div style="font-size:12px;color:#5b6573;text-transform:uppercase;letter-spacing:.06em">Moneyline</div><div style="font-size:18px;font-weight:700;font-variant-numeric:tabular-nums">BUF +150</div></div>
+  </div>
+</div>`},
+
+{id:"case-risk", cat:"visuals", name:"The case & the risk", kind:"html", sample:false,
+ use:"Two short lists side by side: why the bet works and what could sink it. Good for futures and big-game previews.",
+ notes:["Three bullets per side at most. Stacks on a phone."],
+ code:`<div style="display:flex;flex-wrap:wrap;gap:12px;margin:24px 0">
+  <div style="flex:1;min-width:240px;border:1px solid #bfe9d0;background:#f2fbf6;border-radius:10px;padding:14px 16px">
+    <div style="font-weight:700;color:#00793a;margin-bottom:6px">Why we like it</div>
+    <ul style="margin:0;padding-left:18px;line-height:1.5">
+      <li>[Reason one]</li><li>[Reason two]</li><li>[Reason three]</li>
+    </ul>
+  </div>
+  <div style="flex:1;min-width:240px;border:1px solid #f1cdb8;background:#fdf4ee;border-radius:10px;padding:14px 16px">
+    <div style="font-weight:700;color:#a63c0b;margin-bottom:6px">The risk</div>
+    <ul style="margin:0;padding-left:18px;line-height:1.5">
+      <li>[Risk one]</li><li>[Risk two]</li>
+    </ul>
+  </div>
+</div>`},
+
+{id:"takeaways", cat:"visuals", name:"Quick takeaways", kind:"html", sample:false,
+ use:"Three-line summary at the top of long stories, so a reader gets the bet in five seconds.",
+ notes:["Write full sentences. Each bullet should stand on its own."],
+ code:`<div style="margin:24px 0;padding:16px 18px;border:1px solid #e1e5ea;border-radius:10px;background:#f7f8fa">
+  <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#0a1628;margin-bottom:8px">Quick takeaways</div>
+  <ul style="margin:0;padding-left:18px;line-height:1.55">
+    <li>[The bet and the price]</li>
+    <li>[The single biggest reason]</li>
+    <li>[What would change our mind]</li>
+  </ul>
+</div>`},
+
+{id:"expert-note", cat:"visuals", name:"Expert note", kind:"html", sample:false,
+ use:"A quoted take from another Action expert inside someone else’s story, including when they disagree.",
+ notes:["Conflicting expert takes work well with readers. Use this block for them."],
+ code:`<blockquote style="margin:24px 0;padding:14px 18px;border-left:4px solid #0a1628;background:#f7f8fa">
+  <p style="margin:0 0 8px;font-size:17px;line-height:1.5">“[Quote from the expert, in one or two sentences.]”</p>
+  <div style="font-size:14px;color:#4a5568;font-weight:700">[Expert name], [title]</div>
+</blockquote>`},
+
+/* ---------- EMBEDS ---------- */
+{id:"tool-embed", cat:"embeds", name:"Tool embed (iframe)", kind:"html", sample:false,
+ use:"Put a live Action Network tool or chart into an article. Use this in place of Infogram.",
+ notes:["Set the height to fit the tool on a phone. Most tools need [600–800]px.","Always keep the fallback link under the frame. Some apps and readers block embeds.","Approved tool URLs: [link to list]."],
+ code:`<div style="margin:24px 0 8px;border:1px solid #e1e5ea;border-radius:8px;overflow:hidden">
+  <iframe src="[TOOL URL]" title="[Tool name]" loading="lazy"
+    style="display:block;width:100%;height:640px;border:0"></iframe>
+</div>
+<p style="font-size:13px;color:#5b6573;margin:0 0 24px">Can’t see the tool? <a href="[TOOL URL]">Open [tool name]</a>.</p>`,
+ preview:`<div style="margin:24px 0 8px;border:1px solid #e1e5ea;border-radius:8px;height:260px;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,#f7f8fa 0 12px,#eef1f4 12px 24px);color:#4a5568;font-size:15px;text-align:center;padding:16px">The live tool loads here on the article page</div>
+<p style="font-size:13px;color:#5b6573;margin:0 0 24px">Can’t see the tool? <a href="#tool-embed">Open [tool name]</a>.</p>`},
+
+{id:"chart-image", cat:"embeds", name:"Chart as native HTML", kind:"html", sample:true,
+ use:"Simple bar comparisons without Infogram. Ask an AI tool to fill this pattern with your numbers; the text stays in our page, where Google can read it.",
+ notes:["Bar width = the value as a % of the largest value.","For anything more complex than bars, use an image made from our chart template [link]."],
+ code:`<div style="margin:24px 0;border:1px solid #e1e5ea;border-radius:10px;padding:16px">
+  <div style="font-weight:700;margin-bottom:12px">Public bets on the spread</div>
+  <div style="display:flex;flex-direction:column;gap:10px;font-size:14px;font-variant-numeric:tabular-nums">
+    <div><div style="display:flex;justify-content:space-between"><span>Chiefs -3.5</span><b>64%</b></div><div style="height:10px;background:#eef1f4;border-radius:5px"><div style="width:64%;height:10px;background:#0a1628;border-radius:5px"></div></div></div>
+    <div><div style="display:flex;justify-content:space-between"><span>Bills +3.5</span><b>36%</b></div><div style="height:10px;background:#eef1f4;border-radius:5px"><div style="width:36%;height:10px;background:#00c358;border-radius:5px"></div></div></div>
+  </div>
+  <div style="font-size:12px;color:#5b6573;margin-top:10px">Source: [Action Network public betting], as of [time] ET.</div>
+</div>`},
+
+{id:"pm-widget", cat:"embeds", name:"Prediction market widget", kind:"cms", sample:true,
+ use:"Live Polymarket and Kalshi prices for a market the story is about.",
+ notes:["Pick one market per widget.","Default display: [probability / American odds]."],
+ code:`Insert block: [Prediction market widget]
+1. Paste the market URL or ID: [Polymarket / Kalshi]
+2. Choose display: Probability or American odds
+3. Choose time window: [24H / 7D / 30D]`,
+ preview:`<div style="margin:24px 0;border:1px solid #e1e5ea;border-radius:10px;overflow:hidden">
+  <div style="padding:10px 14px;display:flex;justify-content:space-between;font-size:13px;color:#5b6573;border-bottom:1px solid #e1e5ea"><span>Prediction markets</span><span>7D</span></div>
+  <div style="padding:14px;display:flex;flex-direction:column;gap:6px">
+    <div style="font-weight:700">[Market question]</div>
+    <div style="display:flex;gap:16px;font-variant-numeric:tabular-nums;flex-wrap:wrap"><span>Polymarket <b>62%</b></span><span>Kalshi <b>60%</b></span></div>
+  </div>
+</div>`},
+
+/* ---------- CTAS ---------- */
+{id:"cta-offer", cat:"ctas", name:"Sportsbook offer CTA", kind:"cms", sample:true,
+ use:"The primary affiliate CTA. Goes directly under a pick box or an odds table.",
+ notes:["Choose the book whose price you quoted in the pick.","State-specific offers fill in on their own. Don’t type an offer into the block."],
+ code:`Insert block: [Sportsbook CTA]
+1. Choose sportsbook: [DraftKings / FanDuel / BetMGM / ...]
+2. Choose placement tag: [under-pick / under-odds-table / end-of-story]
+3. Leave the offer text on Auto`,
+ preview:`<div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between;margin:24px 0;padding:14px 16px;border:1px solid #e1e5ea;border-radius:10px">
+  <div style="display:flex;align-items:center;gap:12px"><div style="width:44px;height:44px;border-radius:8px;background:#0a1628;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">LOGO</div><div><div style="font-weight:700">[Sportsbook]</div><div style="font-size:14px;color:#4a5568">[Offer fills in by state]</div></div></div>
+  <div style="background:#00c358;color:#06120b;font-weight:700;padding:10px 18px;border-radius:8px">Claim offer</div>
+</div>
+<p style="font-size:12px;color:#5b6573;margin:0 0 24px">[Responsible gaming line from compliance]</p>`},
+
+{id:"cta-inline", cat:"ctas", name:"Inline text CTA", kind:"cms", sample:false,
+ use:"A one-line tracked link inside a paragraph. The secondary CTA in news stories and explainers.",
+ notes:["Use this, not a plain hyperlink, whenever the link goes to a sportsbook."],
+ code:`Insert block: [Inline sportsbook link]
+1. Highlight the anchor text
+2. Choose sportsbook and placement tag: [inline]`,
+ preview:`<p style="margin:16px 0;line-height:1.6">The line has moved two points since Monday. <a href="#cta-inline" style="color:#00793a;font-weight:700">Bet the Bills at [Sportsbook]</a> while +3.5 is still available.</p>`},
+
+{id:"cta-pro", cat:"ctas", name:"PRO subscription CTA", kind:"cms", sample:false,
+ use:"Sends readers to Action Network PRO. Goes at the end of picks stories, after the last pick.",
+ notes:["Not in breaking news, and never above the first pick."],
+ code:`Insert block: [PRO CTA]
+1. Choose variant: [Picks / Projections / Tools]
+2. Placement tag: [end-of-story]`,
+ preview:`<div style="margin:24px 0;padding:18px;border-radius:10px;background:#0a1628;color:#fff;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+  <div><div style="font-weight:700;font-size:17px">Get every pick from our experts</div><div style="color:#b8c4d6;font-size:14px">Action Network PRO</div></div>
+  <div style="background:#00c358;color:#06120b;font-weight:700;padding:10px 18px;border-radius:8px">Try PRO</div>
+</div>`},
+
+{id:"cta-app", cat:"ctas", name:"App download CTA", kind:"cms", sample:false,
+ use:"For news and injury stories, where readers aren’t ready to bet yet. End of story.",
+ notes:["Use it once per story."],
+ code:`Insert block: [App CTA]
+Placement tag: [end-of-story]`,
+ preview:`<div style="margin:24px 0;padding:14px 16px;border:1px solid #e1e5ea;border-radius:10px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+  <div style="font-weight:700">Track every line move in the Action app</div>
+  <div style="border:2px solid #0a1628;color:#0a1628;font-weight:700;padding:8px 16px;border-radius:8px">Get the app</div>
+</div>`},
+
+/* ---------- IMAGES ---------- */
+{id:"figure", cat:"images", name:"In-body image with credit", kind:"html", sample:false,
+ use:"Any photo or graphic inside a story.",
+ notes:["Keep width and height at the image’s real size, so the page doesn’t jump while it loads.","Alt text describes the image. The caption adds context."],
+ code:`<figure style="margin:24px 0">
+  <img src="[IMAGE URL]" alt="[What the photo shows]" width="1200" height="675"
+    style="display:block;width:100%;height:auto;border-radius:6px">
+  <figcaption style="font-size:13px;color:#5b6573;margin-top:6px">[Caption]. Photo by [Photographer]/[Agency]</figcaption>
+</figure>`,
+ preview:`<figure style="margin:24px 0">
+  <div style="aspect-ratio:16/9;max-width:100%;border-radius:6px;background:linear-gradient(135deg,#0a1628,#1d3a5c);display:flex;align-items:center;justify-content:center;color:#b8c4d6;font-size:14px">1200 × 675 image</div>
+  <figcaption style="font-size:13px;color:#5b6573;margin-top:6px">[Caption]. Photo by [Photographer]/[Agency]</figcaption>
+</figure>`},
+
+{id:"featured", cat:"images", name:"Featured image", kind:"cms", sample:false,
+ use:"Required on every story. It’s what readers see in Google News, Discover and social shares.",
+ notes:["Stories without one show up as a blank or tiny card in Google News and Discover.","Check it on the live page after you publish."],
+ code:`In the CMS sidebar: [Featured image]
+1. Upload at least 1200px wide, 16:9
+2. Source: [Getty / Imagn / AP] or a template from [Canva / Figma]
+3. Fill in alt text and credit`,
+ preview:`<div style="margin:24px 0;display:flex;gap:12px;align-items:flex-start;border:1px solid #e1e5ea;border-radius:10px;padding:12px">
+  <div style="flex:none;width:120px;aspect-ratio:16/9;border-radius:6px;background:linear-gradient(135deg,#0a1628,#1d3a5c)"></div>
+  <div><div style="font-size:12px;color:#5b6573">Action Network · 2h</div><div style="font-weight:700;line-height:1.35">[Headline as it appears in Google News]</div></div>
+</div>`}
+];
+
+const PLAYBOOK = [
+  ["Game picks & previews", "Sportsbook offer", "Directly under the first pick box", "Inline link under the odds table; PRO CTA at the end", "A CTA above the lede"],
+  ["Player props", "Sportsbook offer", "Under the pick, for a book that has the prop", "Link to the props tool or projections", "Books that don’t offer the prop"],
+  ["Futures", "Sportsbook offer", "Beside the futures odds table", "Link to the futures odds page", "More than one offer block"],
+  ["Line movement & markets", "Sportsbook offer", "After you explain the move, next to the current number", "Matchup snapshot with the live line", "Quoting a line no book still offers"],
+  ["Breaking news & injuries", "Inline text CTA", "After the betting impact paragraph", "App download CTA at the end", "Offer blocks above the fold"],
+  ["Promo & bonus code pages", "Sportsbook offer", "Above the fold, and again at the end", "Links to the matching review", "Linking to a different book’s offer"],
+  ["Sportsbook reviews", "Sportsbook offer", "Top, after the verdict, and at the end", "Link to the promo page", "Comparing offers in hand-built tables"],
+  ["Explainers & how-to", "Inline text CTA", "After the first worked example", "Link to a promo page", "Offer blocks in the first half"],
+  ["Prediction markets", "Prediction market widget", "Next to the market you’re discussing", "[Affiliate CTA, if approved]", "Sportsbook offers in non-legal-betting framing"]
+];
+
+/* ============================================================
+   RENDERING. No edits needed below this line.
+   ============================================================ */
+const $ = s => document.querySelector(s);
+const BASE = `:host{all:initial;display:block}
+.a{font-family:'DM Sans',Arial,sans-serif;font-size:17px;line-height:1.6;color:#1d2433}
+.a p{margin:0 0 16px} .a a{color:#00793a} .a table{font-family:inherit} .a *{box-sizing:border-box}`;
+
+function playbook(){
+  $("#playbook").innerHTML = PLAYBOOK.map(r => `<tr>
+    <td>${r[0]}</td><td><span class="pill">${r[1]}</span></td><td>${r[2]}</td><td>${r[3]}</td><td><span class="pill no">${r[4]}</span></td></tr>`).join("");
+}
+
+function card(c){
+  const el = document.createElement("article");
+  el.className = "comp"; el.id = c.id;
+  el.dataset.search = (c.name+" "+c.use+" "+c.cat+" "+(c.notes||[]).join(" ")).toLowerCase();
+  const tags = [c.kind==="cms" ? '<span class="tag cms">CMS block</span>' : '<span class="tag">Copy HTML</span>'];
+  if (c.sample) tags.push('<span class="tag">Sample data</span>');
+  el.innerHTML = `
+    <div class="comp-head"><div class="t"><h3>${c.name}</h3><p>${c.use}</p></div><div class="tags">${tags.join("")}</div></div>
+    <div class="frame">
+      <div class="bar"><span class="lbl">Article preview</span>
+        <div class="seg" role="group" aria-label="Preview width">
+          <button type="button" data-w="desktop" aria-pressed="true">Desktop</button>
+          <button type="button" data-w="mobile" aria-pressed="false">Mobile</button>
+        </div></div>
+      <div class="stage"><div class="col"><div class="host"></div></div></div>
+      ${c.kind==="cms" ? '<div class="cmsnote"><b>Don’t paste HTML.</b><span>Insert this from the CMS so it’s tracked. The steps are below.</span></div>' : ''}
+      <div class="codehead"><span>${c.kind==="cms" ? "How to insert" : "HTML"}</span><button type="button" class="btn">Copy</button></div>
+      <pre><code></code></pre>
+    </div>
+    ${c.notes && c.notes.length ? `<ul class="notes">${c.notes.map(n=>`<li>${n}</li>`).join("")}</ul>` : ""}`;
+  const root = el.querySelector(".host").attachShadow({mode:"open"});
+  root.innerHTML = `<style>${BASE}</style><div class="a">${c.preview || c.code}</div>`;
+  el.querySelector("code").textContent = c.code;
+  const col = el.querySelector(".col");
+  el.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+    el.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", x===b));
+    col.classList.toggle("mobile", b.dataset.w==="mobile");
+  }));
+  const btn = el.querySelector(".btn");
+  btn.addEventListener("click", () => {
+    const done = () => { btn.textContent="Copied"; btn.classList.add("ok"); setTimeout(()=>{btn.textContent="Copy"; btn.classList.remove("ok")},1600); };
+    const fallback = () => { const r=document.createRange(); r.selectNodeContents(el.querySelector("code")); const s=getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent="Press Ctrl/⌘+C"; };
+    try { navigator.clipboard.writeText(c.code).then(done, fallback); } catch(e){ fallback(); }
+  });
+  return el;
+}
+
+function library(){
+  const lib = $("#library");
+  CATEGORIES.forEach(cat => {
+    const items = COMPONENTS.filter(c => c.cat===cat.id);
+    const s = document.createElement("section");
+    s.className = "block"; s.id = cat.id;
+    s.innerHTML = `<div class="cathead"><div class="eyebrow">Components</div><h2>${cat.name}</h2><p class="lede">${cat.blurb}</p></div><div class="comps"></div>`;
+    items.forEach(c => s.querySelector(".comps").appendChild(card(c)));
+    lib.appendChild(s);
+  });
+}
+
+function nav(){
+  const g = (title, links) => `<div class="navgroup"><h4>${title}</h4>${links.map(l=>`<a href="#${l[0]}" data-target="${l[0]}">${l[1]}${l[2]!=null?`<span class="n">${l[2]}</span>`:""}</a>`).join("")}</div>`;
+  $("#nav").innerHTML =
+    g("Guide", [["start","How to use this"],["style-guide","Style guide"],["cta-playbook","CTA playbook"]]) +
+    g("Components", CATEGORIES.map(c => [c.id, c.name, COMPONENTS.filter(x=>x.cat===c.id).length]));
+  $("#nav").addEventListener("click", e => {
+    const a = e.target.closest("a"); if(!a) return;
+    e.preventDefault();
+    const t = document.getElementById(a.dataset.target);
+    /* ---- Reconstructed below: the original paste was truncated at this point. ---- */
+    if (!t) return;
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    t.scrollIntoView({behavior: reduce ? "auto" : "smooth", block: "start"});
+    history.replaceState(null, "", "#" + a.dataset.target);
+  });
+}
+
+/* Scroll-spy: highlight the nav link for the section currently at the top of the viewport. */
+function spy(){
+  const links = [...document.querySelectorAll("#nav a")];
+  const targets = links.map(a => document.getElementById(a.dataset.target)).filter(Boolean);
+  const setActive = id => links.forEach(a => a.classList.toggle("active", a.dataset.target === id));
+  const update = () => {
+    let current = targets[0] && targets[0].id;
+    for (const t of targets) {
+      if (t.offsetParent === null) continue; // hidden by search
+      if (t.getBoundingClientRect().top <= 120) current = t.id;
+    }
+    setActive(current);
+  };
+  let ticking = false;
+  addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(() => { update(); ticking = false; }); } }, {passive:true});
+  update();
+}
+
+/* Search: filter component cards; hide categories with no matches. */
+function search(){
+  const q = $("#q");
+  q.addEventListener("input", () => {
+    const terms = q.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    let shown = 0;
+    document.querySelectorAll("#library section.block").forEach(sec => {
+      let any = false;
+      sec.querySelectorAll(".comp").forEach(card => {
+        const hit = terms.every(t => card.dataset.search.includes(t));
+        card.hidden = !hit;
+        if (hit) { any = true; shown++; }
+      });
+      sec.hidden = !any;
+    });
+    $("#nomatch").hidden = shown > 0;
+    document.querySelectorAll("#nav a").forEach(a => {
+      const t = document.getElementById(a.dataset.target);
+      a.style.opacity = t && t.hidden ? ".4" : "";
+    });
+  });
+}
+
+playbook();
+library();
+nav();
+search();
+spy();
+if (location.hash) { const t = document.getElementById(location.hash.slice(1)); if (t) t.scrollIntoView(); }
+</script>
+</body>
+</html>
